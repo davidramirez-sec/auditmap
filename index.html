@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AuditMap — IT Control Framework Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --navy:       #0B1C2C;
+    --navy-mid:   #122236;
+    --navy-light: #1A3050;
+    --navy-card:  #162840;
+    --gold:       #C8A96E;
+    --gold-light: #E2C98A;
+    --teal:       #2ABFBF;
+    --teal-dim:   #1A8080;
+    --white:      #F0F4F8;
+    --muted:      #7A95B0;
+    --border:     #1E3A55;
+    --danger:     #E05C5C;
+    --success:    #4CAF7D;
+    --warn:       #E8A838;
+    --font-head:  'Playfair Display', Georgia, serif;
+    --font-body:  'IBM Plex Sans', sans-serif;
+    --font-mono:  'IBM Plex Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--navy-mid);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: var(--font-head);
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+  }
+  .logo span { color: var(--teal); }
+  .tagline {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .header-badges { display: flex; gap: 8px; }
+  .hbadge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* ── LAYOUT ── */
+  .app { display: grid; grid-template-columns: 280px 1fr; min-height: calc(100vh - 64px); }
+
+  /* ── SIDEBAR ── */
+  aside {
+    background: var(--navy-mid);
+    border-right: 1px solid var(--border);
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .sidebar-section-title {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    width: 100%;
+    background: var(--navy-light);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 9px 12px 9px 34px;
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .search-wrap input:focus { border-color: var(--teal); }
+  .search-wrap input::placeholder { color: var(--muted); }
+  .search-icon {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 14px; pointer-events: none;
+  }
+
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .filter-btn {
+    background: none; border: 1px solid transparent;
+    border-radius: 3px; padding: 7px 10px;
+    color: var(--muted); font-family: var(--font-body); font-size: 12px;
+    cursor: pointer; text-align: left; transition: all .15s;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .filter-btn:hover { background: var(--navy-light); color: var(--white); }
+  .filter-btn.active { background: var(--navy-light); border-color: var(--teal); color: var(--teal); }
+  .filter-count {
+    font-family: var(--font-mono); font-size: 10px;
+    background: var(--navy); padding: 1px 6px; border-radius: 10px;
+    color: var(--muted);
+  }
+
+  /* Gap Scorer */
+  .gap-scorer { background: var(--navy-card); border: 1px solid var(--border); border-radius: 4px; padding: 16px; }
+  .gap-scorer p { font-size: 11px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+  .fw-check { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; }
+  .fw-check input[type=checkbox] { display: none; }
+  .fw-check-box {
+    width: 16px; height: 16px; border: 1px solid var(--border);
+    border-radius: 2px; background: var(--navy-light);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all .15s;
+  }
+  .fw-check input:checked + .fw-check-box { background: var(--teal); border-color: var(--teal); }
+  .fw-check-box::after { content:'✓'; font-size: 10px; color: var(--navy); opacity: 0; transition: opacity .15s; }
+  .fw-check input:checked + .fw-check-box::after { opacity: 1; }
+  .fw-label { font-size: 12px; color: var(--white); }
+  .fw-tag {
+    margin-left: auto; font-family: var(--font-mono); font-size: 9px;
+    padding: 2px 6px; border-radius: 2px; letter-spacing: 1px;
+  }
+  .tag-nist { background: rgba(44,191,191,.15); color: var(--teal); }
+  .tag-iso  { background: rgba(200,169,110,.15); color: var(--gold); }
+  .tag-soc  { background: rgba(76,175,125,.15); color: var(--success); }
+
+  .gap-results { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .gap-bar-wrap { }
+  .gap-bar-label { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .gap-bar-label span:first-child { font-size: 11px; color: var(--muted); }
+  .gap-bar-label span:last-child { font-family: var(--font-mono); font-size: 11px; color: var(--white); }
+  .gap-bar-track { height: 6px; background: var(--navy-light); border-radius: 3px; overflow: hidden; }
+  .gap-bar-fill { height: 100%; border-radius: 3px; transition: width .5s ease; }
+  .fill-nist { background: var(--teal); }
+  .fill-iso  { background: var(--gold); }
+  .fill-soc  { background: var(--success); }
+  .gap-note { font-size: 10px; color: var(--muted); margin-top: 8px; line-height: 1.5; font-style: italic; }
+
+  /* ── MAIN ── */
+  main { padding: 28px 32px; overflow-x: auto; }
+
+  .main-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+  }
+  .result-count { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+  .result-count strong { color: var(--gold); }
+
+  .actions { display: flex; gap: 10px; }
+  .btn {
+    padding: 8px 18px; border-radius: 3px; font-family: var(--font-body);
+    font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s;
+    border: 1px solid transparent; letter-spacing: .3px;
+  }
+  .btn-primary { background: var(--teal); color: var(--navy); border-color: var(--teal); }
+  .btn-primary:hover { background: var(--teal-dim); }
+  .btn-outline { background: none; color: var(--teal); border-color: var(--teal); }
+  .btn-outline:hover { background: rgba(42,191,191,.08); }
+  .btn-gold { background: none; color: var(--gold); border-color: var(--gold); }
+  .btn-gold:hover { background: rgba(200,169,110,.1); }
+  .btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; border-radius: 4px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  thead tr { background: var(--navy-light); }
+  th {
+    padding: 11px 14px; text-align: left;
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--gold); font-weight: 600;
+    border-bottom: 2px solid var(--border); white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .12s;
+    cursor: pointer;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--navy-light); }
+  tbody tr.selected { background: rgba(42,191,191,.07); border-left: 3px solid var(--teal); }
+  td { padding: 11px 14px; font-size: 12px; vertical-align: top; }
+  td:first-child { font-family: var(--font-mono); font-size: 10px; }
+
+  .domain-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 2px;
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px;
+    text-transform: uppercase; white-space: nowrap;
+  }
+  .d-access    { background: rgba(42,191,191,.12);  color: var(--teal);    border: 1px solid rgba(42,191,191,.3); }
+  .d-change    { background: rgba(200,169,110,.12); color: var(--gold);    border: 1px solid rgba(200,169,110,.3); }
+  .d-ops       { background: rgba(76,175,125,.12);  color: var(--success); border: 1px solid rgba(76,175,125,.3); }
+  .d-risk      { background: rgba(224,92,92,.12);   color: var(--danger);  border: 1px solid rgba(224,92,92,.3); }
+  .d-monitor   { background: rgba(232,168,56,.12);  color: var(--warn);    border: 1px solid rgba(232,168,56,.3); }
+  .d-crypto    { background: rgba(160,120,220,.12); color: #B090E0;        border: 1px solid rgba(160,120,220,.3); }
+  .d-hr        { background: rgba(100,160,220,.12); color: #70B0F0;        border: 1px solid rgba(100,160,220,.3); }
+  .d-physical  { background: rgba(180,100,100,.12); color: #E09090;        border: 1px solid rgba(180,100,100,.3); }
+
+  .ctrl-id { color: var(--muted); display: block; margin-bottom: 2px; }
+  .ctrl-val { color: var(--white); }
+  .ctrl-none { color: var(--border); font-style: italic; }
+
+  .ctrl-name { font-weight: 500; color: var(--white); margin-bottom: 3px; }
+  .ctrl-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+  /* Checklist panel */
+  .checklist-panel {
+    position: fixed; right: 0; top: 64px; bottom: 0; width: 340px;
+    background: var(--navy-mid); border-left: 1px solid var(--border);
+    padding: 24px 20px; overflow-y: auto;
+    transform: translateX(100%); transition: transform .3s ease;
+    z-index: 90;
+  }
+  .checklist-panel.open { transform: translateX(0); }
+  .panel-title {
+    font-family: var(--font-head); font-size: 18px; color: var(--gold);
+    margin-bottom: 6px;
+  }
+  .panel-sub { font-size: 11px; color: var(--muted); margin-bottom: 20px; }
+  .panel-close {
+    position: absolute; top: 16px; right: 16px;
+    background: none; border: none; color: var(--muted); font-size: 18px;
+    cursor: pointer; line-height: 1;
+  }
+  .panel-close:hover { color: var(--white); }
+
+  .checklist-item {
+    background: var(--navy-card); border: 1px solid var(--border);
+    border-radius: 3px; padding: 12px; margin-bottom: 10px;
+  }
+  .ci-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .ci-name { font-size: 12px; font-weight: 600; color: var(--white); }
+  .ci-remove {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 14px; padding: 0 2px; line-height: 1;
+  }
+  .ci-remove:hover { color: var(--danger); }
+  .ci-ids { font-family: var(--font-mono); font-size: 9px; color: var(--teal); margin-bottom: 8px; }
+  .ci-evidence-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 5px; }
+  .ci-evidence-list { list-style: none; }
+  .ci-evidence-list li { font-size: 11px; color: var(--muted); padding: 2px 0 2px 12px; position: relative; }
+  .ci-evidence-list li::before { content: '›'; position: absolute; left: 0; color: var(--teal); }
+
+  .panel-empty { text-align: center; padding: 40px 0; }
+  .panel-empty p { color: var(--muted); font-size: 12px; }
+  .panel-empty .icon { font-size: 32px; margin-bottom: 12px; opacity: .4; }
+
+  .selected-count {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--teal); letter-spacing: 1px; margin-bottom: 16px;
+  }
+
+  .export-section { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
+  .export-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; color: var(--muted); margin-bottom: 10px; }
+
+  /* Floating checklist toggle */
+  .checklist-fab {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--teal); color: var(--navy);
+    border: none; border-radius: 3px; padding: 12px 20px;
+    font-family: var(--font-body); font-size: 13px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4); z-index: 80;
+    transition: background .15s;
+  }
+  .checklist-fab:hover { background: var(--teal-dim); }
+  .fab-badge {
+    background: var(--navy); color: var(--teal);
+    border-radius: 10px; padding: 1px 7px;
+    font-family: var(--font-mono); font-size: 11px;
+  }
+
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-state p { color: var(--muted); }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 90px; right: 28px;
+    background: var(--navy-light); border: 1px solid var(--teal);
+    color: var(--teal); padding: 10px 18px; border-radius: 3px;
+    font-size: 12px; font-family: var(--font-mono);
+    opacity: 0; transform: translateY(10px);
+    transition: all .2s; pointer-events: none; z-index: 200;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    aside { display: none; }
+    .checklist-panel { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Audit<span>Map</span></div>
+    <div class="tagline">IT Control Framework Intelligence &nbsp;·&nbsp; by David Ramirez, SSCP · CCSP</div>
+  </div>
+  <div class="header-badges">
+    <span class="hbadge">NIST SP 800-53</span>
+    <span class="hbadge">ISO/IEC 27001</span>
+    <span class="hbadge">SOC 2 TSC</span>
+    <span class="hbadge" id="liveclock"></span>
+    <button class="hbadge" onclick="toggleAbout()" style="cursor:pointer;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:10px;padding:3px 10px;border-radius:2px;letter-spacing:1px">About</button>
+  </div>
+</header>
+
+<div class="app">
+  <aside>
+
+    <!-- Search -->
+    <div>
+      <div class="sidebar-section-title">Search Controls</div>
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="searchInput" placeholder="e.g. access review, logging…"/>
+      </div>
+    </div>
+
+    <!-- Domain Filter -->
+    <div>
+      <div class="sidebar-section-title">Filter by Domain</div>
+      <div class="filter-group" id="domainFilters"></div>
+    </div>
+
+    <!-- Gap Scorer -->
+    <div>
+      <div class="sidebar-section-title">Gap Scorer</div>
+      <div class="gap-scorer">
+        <p>Select frameworks you're currently compliant with to see estimated coverage toward the others.</p>
+        <label class="fw-check">
+          <input type="checkbox" id="gs-nist" onchange="updateGapScorer()"/>
+          <div class="fw-check-box"></div>
+          <span class="fw-label">NIST SP 800-53</span>
+          <span class="fw-tag tag-nist">NIST</span>
+        </label>
+        <label class="fw-check">
+          <input type="checkbox" id="gs-iso" onchange="updateGapScorer()"/>
+          <div class="fw-check-box"></div>
+          <span class="fw-label">ISO/IEC 27001</span>
+          <span class="fw-tag tag-iso">ISO</span>
+        </label>
+        <label class="fw-check">
+          <input type="checkbox" id="gs-soc" onchange="updateGapScorer()"/>
+          <div class="fw-check-box"></div>
+          <span class="fw-label">SOC 2 TSC</span>
+          <span class="fw-tag tag-soc">SOC2</span>
+        </label>
+        <div class="gap-results" id="gapResults"></div>
+      </div>
+    </div>
+
+  </aside>
+
+  <main>
+    <div class="main-top">
+      <div class="result-count" id="resultCount"></div>
+      <div class="actions">
+        <button class="btn btn-outline" onclick="clearSelection()">Clear Selection</button>
+        <button class="btn btn-gold" onclick="openPanel()">Evidence Checklist <span id="fabCount2">0</span></button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px"></th>
+            <th>Control Name</th>
+            <th>Domain</th>
+            <th>NIST SP 800-53</th>
+            <th>ISO/IEC 27001</th>
+            <th>SOC 2 TSC</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <p>No controls match your current filters.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Evidence Checklist Panel -->
+<div class="checklist-panel" id="checklistPanel">
+  <button class="panel-close" onclick="closePanel()">✕</button>
+  <div class="panel-title">Evidence Checklist</div>
+  <div class="panel-sub">Controls selected for testing. Export as CSV for your audit workpapers.</div>
+  <div class="selected-count" id="selectedCount"></div>
+  <div id="checklistItems"></div>
+  <div class="export-section">
+    <div class="export-title">Export</div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="exportCSV()">Download CSV</button>
+    <button class="btn btn-outline" style="width:100%" onclick="copyToClipboard()">Copy to Clipboard</button>
+  </div>
+</div>
+
+<button class="checklist-fab" onclick="openPanel()" id="fab">
+  Evidence Checklist
+  <span class="fab-badge" id="fabCount">0</span>
+</button>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONTROL DATA ─────────────────────────────────────────────────────────────
+const CONTROLS = [
+  // LOGICAL ACCESS
+  { id:'LA-01', name:'User Account Provisioning', domain:'Logical Access', nist:'AC-2', iso:'A.9.2.1', soc:'CC6.1', desc:'Controls for creating, approving, and documenting new user accounts with appropriate access rights.', evidence:['User provisioning request forms / tickets','Approval workflow screenshots (e.g. ServiceNow)','Active Directory new user reports','Role assignment records'] },
+  { id:'LA-02', name:'User Account De-provisioning', domain:'Logical Access', nist:'AC-2(j)', iso:'A.9.2.6', soc:'CC6.2', desc:'Timely removal or disabling of access rights when employment or role changes occur.', evidence:['Termination/transfer notification records','HR system integration logs','Account disable/deletion audit trail','Periodic orphaned account scan results'] },
+  { id:'LA-03', name:'Periodic Access Reviews', domain:'Logical Access', nist:'AC-2(j)', iso:'A.9.2.5', soc:'CC6.3', desc:'Formal reviews of user access rights to verify continued appropriateness and least privilege.', evidence:['Access review sign-off records (manager attestation)','User access listing at review date','Changes made as a result of review','Review frequency policy'] },
+  { id:'LA-04', name:'Least Privilege Enforcement', domain:'Logical Access', nist:'AC-6', iso:'A.9.2.3', soc:'CC6.3', desc:'Users are granted only the minimum access required to perform their job functions.', evidence:['Role-based access control (RBAC) matrix','Privileged access justification forms','Separation of duties conflict reports'] },
+  { id:'LA-05', name:'Privileged Account Management', domain:'Logical Access', nist:'AC-6(1)', iso:'A.9.2.3', soc:'CC6.3', desc:'Oversight and control of admin/superuser accounts including monitoring and approval.', evidence:['List of all privileged accounts','Privileged access approval records','Admin activity logs','PAM tool reports (if applicable)'] },
+  { id:'LA-06', name:'Multi-Factor Authentication', domain:'Logical Access', nist:'IA-2(1)', iso:'A.9.4.2', soc:'CC6.1', desc:'MFA required for access to critical systems, remote access, and privileged accounts.', evidence:['MFA enforcement policy','Configuration screenshots (MFA settings)','MFA enrollment reports (% of users)','Exceptions log (if any)'] },
+  { id:'LA-07', name:'Password Policy Enforcement', domain:'Logical Access', nist:'IA-5', iso:'A.9.4.3', soc:'CC6.1', desc:'Password complexity, expiry, and history requirements enforced across systems.', evidence:['Password policy document','Active Directory / IdP policy configuration screenshots','Password policy compliance scan results'] },
+  { id:'LA-08', name:'Remote Access Controls', domain:'Logical Access', nist:'AC-17', iso:'A.6.2.2', soc:'CC6.6', desc:'Secure, authenticated access for remote users including VPN and zero-trust controls.', evidence:['Remote access policy','VPN configuration and approved user list','MFA requirement for remote access confirmation'] },
+  { id:'LA-09', name:'Session Management & Timeout', domain:'Logical Access', nist:'AC-11', iso:'A.9.4.2', soc:'CC6.1', desc:'Automatic session lock and timeout after period of inactivity.', evidence:['Session timeout configuration screenshots','Policy documentation','GPO or MDM policy exports'] },
+
+  // CHANGE MANAGEMENT
+  { id:'CM-01', name:'Change Request & Approval', domain:'Change Management', nist:'CM-3', iso:'A.12.1.2', soc:'CC8.1', desc:'All changes to production systems must be formally requested, reviewed, and approved before implementation.', evidence:['Change request tickets (ServiceNow/Jira)','Approval records (manager/CAB sign-off)','Change Advisory Board (CAB) meeting minutes'] },
+  { id:'CM-02', name:'Emergency Change Procedures', domain:'Change Management', nist:'CM-3(2)', iso:'A.12.1.2', soc:'CC8.1', desc:'Expedited process for urgent changes with retroactive approval and documentation requirements.', evidence:['Emergency change policy','Emergency change tickets with retroactive approval','Post-implementation review records'] },
+  { id:'CM-03', name:'Segregation of Duties — Change', domain:'Change Management', nist:'AC-5', iso:'A.6.1.2', soc:'CC8.1', desc:'The person who develops or requests a change cannot be the sole approver of that same change.', evidence:['SoD matrix for change management roles','Evidence that developer ≠ approver in sample tickets','Access control report showing role separation'] },
+  { id:'CM-04', name:'Pre/Post Change Testing', domain:'Change Management', nist:'CM-3(b)', iso:'A.14.2.8', soc:'CC8.1', desc:'Changes are tested in a non-production environment before deployment; results are documented.', evidence:['Test environment evidence (UAT/staging)','Test results and sign-off documentation','Rollback plan records'] },
+  { id:'CM-05', name:'Change Record Completeness', domain:'Change Management', nist:'CM-3', iso:'A.12.1.2', soc:'CC8.1', desc:'All changes are tracked with complete records including description, impact, approver, and outcome.', evidence:['Sample of closed change tickets','Change log with mandatory fields populated','ITSM system reports (ServiceNow)'] },
+  { id:'CM-06', name:'Software Development Lifecycle (SDLC)', domain:'Change Management', nist:'SA-3', iso:'A.14.2.1', soc:'CC8.1', desc:'Formal SDLC process ensures security is embedded in system development and acquisition.', evidence:['SDLC policy','Code review records','Security review gates documentation','Version control audit logs (Git)'] },
+
+  // COMPUTER OPERATIONS
+  { id:'CO-01', name:'Backup & Recovery', domain:'Computer Operations', nist:'CP-9', iso:'A.12.3.1', soc:'A1.2', desc:'Regular backups of critical data with tested recovery procedures to ensure availability.', evidence:['Backup policy and schedule','Backup completion/success logs','Recovery test results and dates','RTO/RPO documentation'] },
+  { id:'CO-02', name:'System Availability Monitoring', domain:'Computer Operations', nist:'SI-4', iso:'A.12.4.1', soc:'A1.1', desc:'Continuous monitoring of system availability, uptime, and performance against defined SLAs.', evidence:['SLA documentation','Uptime monitoring reports/dashboards','Incident tickets related to downtime','Availability SLA compliance reports'] },
+  { id:'CO-03', name:'Incident Response Plan', domain:'Computer Operations', nist:'IR-4', iso:'A.16.1.5', soc:'CC7.3', desc:'Documented and tested procedures for identifying, containing, and resolving IT incidents.', evidence:['Incident response policy/playbook','Sample incident tickets with timeline','Incident response test/drill records','Post-incident review reports'] },
+  { id:'CO-04', name:'Business Continuity Planning', domain:'Computer Operations', nist:'CP-2', iso:'A.17.1.1', soc:'A1.3', desc:'Plans to maintain or restore business operations during disruption or disaster scenarios.', evidence:['BCP/DR plan documentation','BCP test exercise results','Recovery time actual vs. RTO','Business impact analysis (BIA)'] },
+  { id:'CO-05', name:'Patch & Vulnerability Management', domain:'Computer Operations', nist:'SI-2', iso:'A.12.6.1', soc:'CC7.1', desc:'Timely identification, prioritisation, and remediation of software vulnerabilities.', evidence:['Vulnerability scan results (Tenable/Nessus)','Patch management policy','Patch deployment reports','Risk register for accepted vulnerabilities'] },
+  { id:'CO-06', name:'Capacity Management', domain:'Computer Operations', nist:'PE-12', iso:'A.12.1.3', soc:'A1.1', desc:'Monitoring and planning of IT resource capacity to ensure continued system performance.', evidence:['Capacity monitoring dashboards','Capacity planning reports','Threshold alert configurations'] },
+  { id:'CO-07', name:'Job Scheduling & Batch Processing', domain:'Computer Operations', nist:'SI-3', iso:'A.12.1.1', soc:'PI1.4', desc:'Scheduled jobs and batch processes are monitored, and failures are detected and remediated.', evidence:['Job scheduler configuration','Batch job completion/failure logs','Alert notification records for failures'] },
+
+  // MONITORING & LOGGING
+  { id:'ML-01', name:'Audit Log Generation', domain:'Monitoring & Logging', nist:'AU-2', iso:'A.12.4.1', soc:'CC7.2', desc:'Systems generate audit logs capturing user activity, access events, and security-relevant actions.', evidence:['Logging policy defining required event types','System logging configuration screenshots','Sample audit log exports'] },
+  { id:'ML-02', name:'Log Integrity & Retention', domain:'Monitoring & Logging', nist:'AU-9', iso:'A.12.4.2', soc:'CC7.2', desc:'Audit logs are protected from modification and retained for a defined period per policy.', evidence:['Log retention policy (duration defined)','Log storage configuration (immutable/WORM)','Log integrity verification records'] },
+  { id:'ML-03', name:'Security Event Monitoring (SIEM)', domain:'Monitoring & Logging', nist:'SI-4', iso:'A.12.4.1', soc:'CC7.2', desc:'Centralised collection and analysis of security events to detect anomalies and threats.', evidence:['SIEM configuration documentation','Alert rule set documentation','Sample SIEM alert reports','SIEM coverage inventory (sources feeding in)'] },
+  { id:'ML-04', name:'Failed Login Monitoring', domain:'Monitoring & Logging', nist:'AU-2', iso:'A.12.4.1', soc:'CC7.2', desc:'Failed authentication attempts are logged, alerted on, and investigated when thresholds are exceeded.', evidence:['Failed login alert threshold configuration','Sample alert notifications','Investigation records for triggered alerts'] },
+  { id:'ML-05', name:'Privileged Activity Monitoring', domain:'Monitoring & Logging', nist:'AC-2(4)', iso:'A.12.4.1', soc:'CC6.3', desc:'Admin and privileged user actions are separately logged and reviewed.', evidence:['Privileged activity log reports','Log review sign-off records','Alert rules for privileged anomalies'] },
+  { id:'ML-06', name:'Log Review Process', domain:'Monitoring & Logging', nist:'AU-6', iso:'A.12.4.1', soc:'CC7.2', desc:'Regular review of audit logs by responsible personnel to identify suspicious activity.', evidence:['Log review policy (frequency defined)','Log review completion records','Findings and follow-up documentation'] },
+
+  // RISK MANAGEMENT
+  { id:'RM-01', name:'Risk Assessment Process', domain:'Risk Management', nist:'RA-3', iso:'A.8.2.1', soc:'CC3.1', desc:'Formal process for identifying, analysing, and evaluating information security risks.', evidence:['Risk assessment methodology document','Risk assessment report (most recent)','Risk register','Risk assessment frequency policy'] },
+  { id:'RM-02', name:'Risk Register Maintenance', domain:'Risk Management', nist:'RA-3', iso:'A.8.2.1', soc:'CC3.2', desc:'Active risk register tracking identified risks, ownership, likelihood, impact, and treatment status.', evidence:['Current risk register','Evidence of periodic review and updates','Risk owner assignments'] },
+  { id:'RM-03', name:'Third-Party Risk Management', domain:'Risk Management', nist:'SA-9', iso:'A.15.1.1', soc:'CC9.2', desc:'Due diligence and ongoing monitoring of third-party vendors and service providers.', evidence:['Vendor risk assessment records','Third-party SOC reports obtained','Vendor contracts with security clauses','Vendor inventory'] },
+  { id:'RM-04', name:'Security Policies & Procedures', domain:'Risk Management', nist:'PL-1', iso:'A.5.1.1', soc:'CC1.3', desc:'Documented, approved, and communicated information security policies reviewed at regular intervals.', evidence:['Information security policy (signed/approved)','Policy review dates and approver sign-off','Evidence of policy communication to staff'] },
+  { id:'RM-05', name:'Security Awareness Training', domain:'Risk Management', nist:'AT-2', iso:'A.7.2.2', soc:'CC1.4', desc:'Staff complete mandatory security awareness training upon hire and annually thereafter.', evidence:['Training completion reports (% staff)','Training content and dates','Acknowledgement records'] },
+
+  // NETWORK SECURITY
+  { id:'NS-01', name:'Firewall Management', domain:'Network Security', nist:'SC-7', iso:'A.13.1.1', soc:'CC6.6', desc:'Firewalls are configured, maintained, and reviewed to enforce network boundary controls.', evidence:['Firewall policy','Firewall rule set review records','Change records for rule modifications','Firewall configuration baseline'] },
+  { id:'NS-02', name:'Network Segmentation', domain:'Network Security', nist:'SC-7(5)', iso:'A.13.1.3', soc:'CC6.6', desc:'Network zones separated by sensitivity level to limit lateral movement and contain breaches.', evidence:['Network topology diagram','VLAN/segmentation configuration','Access control between zones documentation'] },
+  { id:'NS-03', name:'Intrusion Detection & Prevention', domain:'Network Security', nist:'SI-3', iso:'A.13.1.1', soc:'CC7.2', desc:'IDS/IPS systems monitor for and alert on malicious network activity.', evidence:['IDS/IPS configuration documentation','Alert and signature update records','Sample detection reports'] },
+  { id:'NS-04', name:'Secure Network Transmission', domain:'Network Security', nist:'SC-8', iso:'A.13.2.3', soc:'CC6.7', desc:'Sensitive data transmitted over networks is encrypted using approved protocols (TLS 1.2+).', evidence:['Encryption policy','TLS configuration scan results','Certificate inventory and expiry tracking'] },
+  { id:'NS-05', name:'Wireless Network Security', domain:'Network Security', nist:'SC-40', iso:'A.13.1.2', soc:'CC6.6', desc:'Wireless networks are secured with strong authentication and segregated from production systems.', evidence:['Wireless security policy','Wi-Fi configuration (WPA2/3, SSID segregation)','Guest network isolation evidence'] },
+
+  // ENDPOINT & CRYPTOGRAPHY
+  { id:'EP-01', name:'Endpoint Protection (AV/EDR)', domain:'Endpoint Security', nist:'SI-3', iso:'A.12.2.1', soc:'CC6.8', desc:'Antivirus or endpoint detection and response (EDR) tools deployed and maintained on all endpoints.', evidence:['AV/EDR deployment reports (coverage %)','Signature update logs','Scan results and quarantine records'] },
+  { id:'EP-02', name:'Endpoint Hardening / Baselines', domain:'Endpoint Security', nist:'CM-6', iso:'A.12.6.2', soc:'CC6.1', desc:'Endpoints configured to approved security baselines (CIS Benchmarks or equivalent).', evidence:['Hardening baseline document','Configuration compliance scan results','Deviation records and approvals'] },
+  { id:'EP-03', name:'Mobile Device Management', domain:'Endpoint Security', nist:'AC-19', iso:'A.6.2.1', soc:'CC6.6', desc:'Mobile devices accessing corporate systems are enrolled in MDM and comply with security policy.', evidence:['MDM policy','Enrolled device inventory','MDM compliance reports','Remote wipe capability confirmation'] },
+  { id:'EP-04', name:'Encryption of Data at Rest', domain:'Endpoint Security', nist:'SC-28', iso:'A.10.1.1', soc:'CC6.7', desc:'Sensitive data stored on endpoints and servers is encrypted to prevent unauthorised disclosure.', evidence:['Encryption policy','BitLocker/FileVault/LUKS deployment reports','Encryption compliance scan results'] },
+  { id:'EP-05', name:'Cryptographic Key Management', domain:'Endpoint Security', nist:'SC-12', iso:'A.10.1.2', soc:'CC6.7', desc:'Cryptographic keys are generated, stored, rotated, and revoked according to a defined policy.', evidence:['Key management policy','Key inventory','Key rotation records','HSM or key vault configuration'] },
+
+  // HR & PERSONNEL
+  { id:'HR-01', name:'Background Screening', domain:'HR & Personnel', nist:'PS-3', iso:'A.7.1.1', soc:'CC1.4', desc:'Pre-employment background checks conducted for roles with access to sensitive systems or data.', evidence:['Background check policy','Screening completion records (anonymised)','Roles subject to enhanced screening'] },
+  { id:'HR-02', name:'Acceptable Use Policy', domain:'HR & Personnel', nist:'PL-4', iso:'A.7.2.1', soc:'CC1.3', desc:'Users acknowledge and sign an Acceptable Use Policy (AUP) governing system and data use.', evidence:['AUP document','Signed acknowledgement records','Onboarding checklist showing AUP step'] },
+  { id:'HR-03', name:'Disciplinary Process for Security Violations', domain:'HR & Personnel', nist:'PS-8', iso:'A.7.2.3', soc:'CC1.5', desc:'Defined consequences for violations of information security policies enforced consistently.', evidence:['HR disciplinary policy referencing security violations','Evidence of enforcement (redacted case records)','Communication of consequences to staff'] },
+
+  // PHYSICAL SECURITY
+  { id:'PS-01', name:'Physical Access Controls', domain:'Physical Security', nist:'PE-2', iso:'A.11.1.2', soc:'CC6.4', desc:'Access to data centres and server rooms restricted to authorised personnel via badge/biometric controls.', evidence:['Physical access policy','Badge access logs for sensitive areas','Access list reviews','Visitor log records'] },
+  { id:'PS-02', name:'Physical Security Monitoring (CCTV)', domain:'Physical Security', nist:'PE-6', iso:'A.11.1.1', soc:'CC6.4', desc:'CCTV surveillance of physical entry points and critical infrastructure areas.', evidence:['CCTV policy','Camera location diagram','Retention period confirmation','Monitoring procedure documentation'] },
+  { id:'PS-03', name:'Environmental Controls', domain:'Physical Security', nist:'PE-14', iso:'A.11.2.2', soc:'A1.2', desc:'Temperature, humidity, and power controls in server/data centre environments to protect hardware.', evidence:['Environmental monitoring configuration','Alert thresholds and notification records','UPS and generator test records','HVAC maintenance logs'] },
+  { id:'CO-08', name:'Media Sanitisation & Disposal', domain:'Computer Operations', nist:'MP-6', iso:'A.11.2.7', soc:'CC6.5', desc:'Storage media containing sensitive data is securely sanitised or destroyed prior to disposal or reuse.', evidence:['Media disposal policy','Sanitisation/destruction records (certificates)','NIST 800-88 or DoD 5220.22-M method confirmation','Vendor destruction certificates (if outsourced)'] },
+];
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let selected = new Set();
+let activeFilter = 'All';
+let searchTerm = '';
+
+const DOMAINS = ['All', ...['Logical Access','Change Management','Computer Operations','Monitoring & Logging','Risk Management','Network Security','Endpoint Security','HR & Personnel','Physical Security']];
+const DOMAIN_CLASS = {
+  'Logical Access':'d-access','Change Management':'d-change','Computer Operations':'d-ops',
+  'Monitoring & Logging':'d-monitor','Risk Management':'d-risk','Network Security':'d-monitor',
+  'Endpoint Security':'d-crypto','HR & Personnel':'d-hr','Physical Security':'d-physical'
+};
+
+// GAP SCORER DATA: for each pair (source→target), % coverage estimate
+const GAP_DATA = {
+  nist: { iso: 72, soc: 68 },
+  iso:  { nist: 70, soc: 60 },
+  soc:  { nist: 58, soc2: 100, iso: 55 },
+};
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+function getFiltered() {
+  return CONTROLS.filter(c => {
+    const matchDomain = activeFilter === 'All' || c.domain === activeFilter;
+    const q = searchTerm.toLowerCase();
+    const matchSearch = !q || c.name.toLowerCase().includes(q) || c.nist.toLowerCase().includes(q)
+      || c.iso.toLowerCase().includes(q) || c.soc.toLowerCase().includes(q)
+      || c.domain.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q);
+    return matchDomain && matchSearch;
+  });
+}
+
+function renderDomainFilters() {
+  const el = document.getElementById('domainFilters');
+  el.innerHTML = '';
+  DOMAINS.forEach(d => {
+    const count = d === 'All' ? CONTROLS.length : CONTROLS.filter(c => c.domain === d).length;
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (d === activeFilter ? ' active' : '');
+    btn.innerHTML = `${d} <span class="filter-count">${count}</span>`;
+    btn.onclick = () => { activeFilter = d; render(); };
+    el.appendChild(btn);
+  });
+}
+
+function renderTable() {
+  const filtered = getFiltered();
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+  document.getElementById('resultCount').innerHTML = `Showing <strong>${filtered.length}</strong> of ${CONTROLS.length} controls`;
+
+  if (!filtered.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtered.map(c => `
+    <tr onclick="toggleSelect('${c.id}')" class="${selected.has(c.id) ? 'selected' : ''}">
+      <td><div style="width:16px;height:16px;border:1px solid ${selected.has(c.id) ? 'var(--teal)' : 'var(--border)'};border-radius:2px;background:${selected.has(c.id) ? 'var(--teal)' : 'var(--navy-light)'};display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--navy)">${selected.has(c.id) ? '✓' : ''}</div></td>
+      <td>
+        <div class="ctrl-name">${c.name}</div>
+        <div class="ctrl-desc">${c.desc}</div>
+      </td>
+      <td><span class="domain-badge ${DOMAIN_CLASS[c.domain]}">${c.domain}</span></td>
+      <td><span class="ctrl-id">${c.nist}</span></td>
+      <td><span class="ctrl-id">${c.iso}</span></td>
+      <td><span class="ctrl-id">${c.soc}</span></td>
+    </tr>
+  `).join('');
+}
+
+function renderChecklist() {
+  const count = selected.size;
+  document.getElementById('fabCount').textContent = count;
+  document.getElementById('fabCount2').textContent = count;
+  document.getElementById('selectedCount').textContent = count + ' control' + (count !== 1 ? 's' : '') + ' selected';
+
+  const el = document.getElementById('checklistItems');
+  if (!count) {
+    el.innerHTML = '<div class="panel-empty"><div class="icon">📋</div><p>Click rows in the table to add controls to your checklist.</p></div>';
+    return;
+  }
+  el.innerHTML = [...selected].map(id => {
+    const c = CONTROLS.find(x => x.id === id);
+    return `
+      <div class="checklist-item">
+        <div class="ci-header">
+          <div class="ci-name">${c.name}</div>
+          <button class="ci-remove" onclick="event.stopPropagation();removeControl('${c.id}')">✕</button>
+        </div>
+        <div class="ci-ids">${c.nist} · ${c.iso} · ${c.soc}</div>
+        <div class="ci-evidence-title">EVIDENCE REQUIRED</div>
+        <ul class="ci-evidence-list">
+          ${c.evidence.map(e => `<li>${e}</li>`).join('')}
+        </ul>
+      </div>`;
+  }).join('');
+}
+
+function render() {
+  renderDomainFilters();
+  renderTable();
+  renderChecklist();
+}
+
+// ── INTERACTIONS ─────────────────────────────────────────────────────────────
+function toggleSelect(id) {
+  if (selected.has(id)) selected.delete(id); else selected.add(id);
+  render();
+}
+function removeControl(id) { selected.delete(id); render(); }
+function clearSelection() { selected.clear(); render(); }
+function openPanel()  { document.getElementById('checklistPanel').classList.add('open'); }
+function closePanel() { document.getElementById('checklistPanel').classList.remove('open'); }
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchTerm = e.target.value; render();
+});
+
+// ── GAP SCORER ───────────────────────────────────────────────────────────────
+function updateGapScorer() {
+  const nist = document.getElementById('gs-nist').checked;
+  const iso  = document.getElementById('gs-iso').checked;
+  const soc  = document.getElementById('gs-soc').checked;
+  const el = document.getElementById('gapResults');
+
+  if (!nist && !iso && !soc) { el.innerHTML = ''; return; }
+
+  // Calculate weighted coverage
+  let nistCov = nist ? 100 : 0;
+  let isoCov  = iso  ? 100 : 0;
+  let socCov  = soc  ? 100 : 0;
+
+  if (!nist && (iso || soc)) {
+    nistCov = Math.min(100, (iso ? GAP_DATA.iso.nist : 0) + (soc ? GAP_DATA.soc.nist : 0));
+  }
+  if (!iso && (nist || soc)) {
+    isoCov = Math.min(100, (nist ? GAP_DATA.nist.iso : 0) + (soc ? GAP_DATA.soc.iso : 0));
+  }
+  if (!soc && (nist || iso)) {
+    socCov = Math.min(100, (nist ? GAP_DATA.nist.soc : 0) + (iso ? GAP_DATA.iso.soc : 0));
+  }
+
+  const bars = [
+    { label:'NIST SP 800-53', pct: Math.round(nistCov), cls:'fill-nist', owned: nist },
+    { label:'ISO/IEC 27001',  pct: Math.round(isoCov),  cls:'fill-iso',  owned: iso },
+    { label:'SOC 2 TSC',      pct: Math.round(socCov),  cls:'fill-soc',  owned: soc },
+  ];
+
+  el.innerHTML = bars.map(b => `
+    <div class="gap-bar-wrap">
+      <div class="gap-bar-label">
+        <span>${b.label}${b.owned ? ' ✓' : ''}</span>
+        <span>${b.pct}%</span>
+      </div>
+      <div class="gap-bar-track">
+        <div class="gap-bar-fill ${b.cls}" style="width:${b.pct}%"></div>
+      </div>
+    </div>
+  `).join('') + `<div class="gap-note">Coverage estimates based on NIST/ISO/SOC 2 control overlap mappings. Gaps indicate controls requiring independent remediation.</div>`;
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────────
+function buildCSVContent() {
+  const rows = [['Control ID','Control Name','Domain','NIST SP 800-53','ISO/IEC 27001','SOC 2 TSC','Description','Evidence Required']];
+  [...selected].forEach(id => {
+    const c = CONTROLS.find(x => x.id === id);
+    rows.push([c.id, c.name, c.domain, c.nist, c.iso, c.soc, c.desc, c.evidence.join(' | ')]);
+  });
+  return rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+}
+
+function exportCSV() {
+  if (!selected.size) { showToast('No controls selected.'); return; }
+  const csv = buildCSVContent();
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = 'AuditMap_Evidence_Checklist.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV downloaded ✓');
+}
+
+function copyToClipboard() {
+  if (!selected.size) { showToast('No controls selected.'); return; }
+  navigator.clipboard.writeText(buildCSVContent()).then(() => showToast('Copied to clipboard ✓'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg;
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+
+// ── CLOCK ─────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const el = document.getElementById('liveclock');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = now.toUTCString().replace(' GMT','') + ' UTC';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── ABOUT MODAL ───────────────────────────────────────────────────────────────
+function toggleAbout() {
+  const m = document.getElementById('aboutModal');
+  if (!m) return;
+  const isOpen = m.style.display === 'flex';
+  m.style.display = isOpen ? 'none' : 'flex';
+}
+
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+render();
+</script>
+
+<!-- About Modal -->
+<div id="aboutModal" onclick="if(event.target===this)toggleAbout()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:center;justify-content:center">
+  <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:4px;padding:36px;max-width:480px;width:90%;position:relative">
+    <button onclick="toggleAbout()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">✕</button>
+    <div style="font-family:var(--font-head);font-size:22px;color:var(--gold);margin-bottom:6px">About AuditMap</div>
+    <div style="font-family:var(--font-mono);font-size:9px;color:var(--teal);letter-spacing:2px;margin-bottom:18px">IT CONTROL FRAMEWORK INTELLIGENCE TOOL</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px">
+      AuditMap was built to solve a problem I kept running into: cross-referencing NIST SP 800-53, ISO/IEC 27001, and SOC 2 Trust Services Criteria manually is slow and error-prone — especially during audit scoping.
+    </p>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px">
+      This tool maps 50 controls across all three frameworks simultaneously, scores your gap coverage based on existing compliance, and generates exportable evidence checklists ready for audit workpapers.
+    </p>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:22px">
+      Built for auditors, compliance analysts, and IT security teams preparing for SOC 1 / SOC 2 engagements.
+    </p>
+    <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:13px;color:var(--white);font-weight:600">David Ramirez</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">SSCP · CCSP · CySA+ · Security+</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--teal);margin-top:2px">davidramirez.tech@gmail.com</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">VERSION</div>
+        <div style="font-family:var(--font-mono);font-size:13px;color:var(--gold)">v1.0</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">2025</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer style="background:var(--navy-mid);border-top:1px solid var(--border);padding:14px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+  <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">
+    AuditMap v1.0 &nbsp;·&nbsp; <span style="color:var(--teal)">50 controls</span> &nbsp;·&nbsp; NIST SP 800-53 · ISO/IEC 27001 · SOC 2 TSC
+  </div>
+  <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted)">
+    Built by <span style="color:var(--gold)">David Ramirez</span> &nbsp;·&nbsp; SSCP · CCSP · CySA+ &nbsp;·&nbsp;
+    <a href="mailto:davidramirez.tech@gmail.com" style="color:var(--teal);text-decoration:none">davidramirez.tech@gmail.com</a>
+  </div>
+</footer>
+
+</body>
+</html>
