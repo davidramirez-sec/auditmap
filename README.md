@@ -2,7 +2,7 @@
 
 A control mapping reference tool I built to speed up audit scoping work.
 
-When you're preparing for a SOC 1 or SOC 2 engagement, one of the first things you do is figure out which controls apply and what evidence you need to collect. Cross-referencing NIST, ISO 27001, and SOC 2 TSC manually across spreadsheets is tedious — so I built this to do it in one place.
+When you're preparing for a SOC 1 or SOC 2 engagement, one of the first things you do is figure out which controls apply and what evidence you need to collect. Cross-referencing NIST, ISO 27001, and SOC 2 TSC manually across spreadsheets is tedious. I built this to do it in one place.
 
 **Live:** https://davidramirez-sec.github.io/auditmap
 
